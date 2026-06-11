@@ -1,6 +1,7 @@
 from mysql.connector.errors import DatabaseError
 import mysql.connector
 from models.user import User
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class DuplicateError(DatabaseError):
@@ -13,6 +14,14 @@ class ConnectionError(DatabaseError):
 
 class UserNotfound(Exception):
     pass
+
+
+class UserRepoMolel(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: int = Field(alias="id")
+    username: str = Field(alias="username")
+    password: str = Field(alias="passwords")
 
 
 class UserRepository():
@@ -34,18 +43,18 @@ class UserRepository():
             cursor.close()
 
     def GetUser(self, username: str) -> User:
-        cursor = self.conn.cursor()
+        cursor = self.conn.cursor(dictionary=True)
 
         cursor.execute(
             f"SELECT * FROM users WHERE username = '{username}'")
-        userResult = cursor.fetchone()
-
-        if userResult is None:
+        row = cursor.fetchone()
+        if row is None:
             cursor.close()
             raise UserNotfound("User not found!")
-
+        else:
+            user_result = UserRepoMolel.model_validate(row)
         user = User(
-            user_id=userResult[0], Username=userResult[1], Password=userResult[2])
+            user_id=user_result.id, Username=user_result.username, Password=user_result.password)
 
         cursor.close()
         return user
