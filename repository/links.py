@@ -23,8 +23,13 @@ class LinksRepository():
 
     def CreateLink(self, user_id: int, destination: str, slug: str):
         cursor = self.conn.cursor()
-        cursor.execute(
-            f'INSERT INTO links(user_id,destination_url,slug) VALUES ("{user_id}","{destination}","{slug}")')
+        try:
+            cursor.execute(
+                f'INSERT INTO links(user_id,destination_url,slug) VALUES ("{user_id}","{destination}","{slug}")')
+        except DatabaseError as err:
+            raise err
+        finally:
+            cursor.close()
 
     def GetLinks(self, user_id: int) -> List[Link]:
         cursor = self.conn.cursor(dictionary=True)

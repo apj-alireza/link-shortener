@@ -25,7 +25,7 @@ def create_link(link: Link, user_id: int = Depends(middleware)):
         slug = links_services.create_link(user_id, link.original_url)
     except DatabaseError:
         raise HTTPException(
-            status_code=404, detail="this destination already exist!")
+            status_code=500, detail="failed!")
 
     return {"url": slug}
 

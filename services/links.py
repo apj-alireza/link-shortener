@@ -1,5 +1,7 @@
 import repository.links
 import secrets
+from logger_config import logger
+from mysql.connector.errors import DatabaseError
 
 
 class LinksServices():
@@ -7,8 +9,14 @@ class LinksServices():
         self.repo = repo
 
     def create_link(self, user_id, destination):
+        logger.info(f"create link for {destination}")
         slug = secrets.token_urlsafe(8)
-        self.repo.CreateLink(user_id, destination, slug)
+        try:
+            self.repo.CreateLink(user_id, destination, slug)
+        except DatabaseError as err:
+            logger.error(f"error:{err}")
+            raise err
+        logger.info(f"created link: {slug}")
         return slug
 
     def get_links(self, user_id: int):
