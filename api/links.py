@@ -1,4 +1,5 @@
 import utils.db
+import utils.redis
 import repository.links
 import services.links
 from fastapi import HTTPException, APIRouter, Depends
@@ -6,10 +7,14 @@ from pydantic import BaseModel, HttpUrl
 from mysql.connector.errors import DatabaseError
 from middleware.auth import user_auth as middleware
 from fastapi.responses import RedirectResponse
+from services.ratelimit import SlidingWindow
 
 DBconn = utils.db.connectDB()
+redis = utils.redis.connect_redis()
 links_repo = repository.links.LinksRepository(DBconn)
-links_services = services.links.LinksServices(links_repo)
+rate_limiter = SlidingWindow(window_size=60, max_request=5, redis=redis)
+links_services = services.links.LinksServices(
+    links_repo, redis, rate_limiter=rate_limiter)
 
 
 class Link(BaseModel):
@@ -61,6 +66,8 @@ def redirect(slug: str):
         link = links_services.get_link_by_slug(slug)
     except DatabaseError:
         raise HTTPException(status_code=404)
+    except services.links.RateLimitPassed:
+        raise HTTPException(status_code=429)
 
     return RedirectResponse(
         url=link,
