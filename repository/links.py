@@ -87,13 +87,14 @@ class LinksRepository():
         cursor = self.conn.cursor()
         try:
             cursor.execute(
-                'SELECT destination_url from links WHERE slug = %s', (slug,))
+                'SELECT destination_url,BIN_TO_UUID(id) AS id from links WHERE slug = %s', (slug,))
             row = cursor.fetchone()
             if row is None:
                 raise DatabaseError
             else:
                 url_str = str(row[0])
-                return url_str
+                user_id = str(row[1])
+                return [url_str, user_id]
         except mysql.connector.Error as err:
             raise err
         finally:
