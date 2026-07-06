@@ -1,6 +1,7 @@
 import redis
+from utils.configs import REDIS_HOST, REDIS_PORT
 
 
 def connect_redis() -> redis.Redis:
-    r = redis.Redis(host="127.0.0.1", port=6379, decode_responses=True)
+    r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
     return r
